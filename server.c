@@ -5,14 +5,24 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <sys/un.h>
+#define path "server_socket"
+
 
 char *remove_spaces(char buffer[256]);
 void error(char *message);
-#define path "server_socket"
+struct client{
+    int client_socket ;
+    char *name;
+    struct sockaddr_un client_address;
+};
 
 int main(int argc, char *argv[]){
+
     int max_clients = atoi(argv[1]);
-   struct  client all_clients[max_clients];
+    int all_clients[max_clients] ;
+    for(int j=0;j<max_clients;j++){
+        all_clients[j] = 0;
+    }
     int server_socket,client_socket;
     
     server_socket = socket(AF_UNIX, SOCK_STREAM,0);
@@ -28,22 +38,51 @@ int main(int argc, char *argv[]){
     if(server_bind == -1){
         error("Error establishing a server socket connection \n");
     }
-    listen(server_socket,max_clients);
-    if(listen == -1){
+  
+   
+    while(1){
+         if(listen(server_socket,max_clients) == -1){
         error("Error in listening via socket");
     }
-    while(1){
-            char server_message[256] = {};
-
-        int len = sizeof(address_client);
+        client_socket = 0;
+    char server_message[256] = {};
+    for(int j=0;j<max_clients;j++){
+        printf("%d\n",all_clients[j]);
+    }
+    int len = sizeof(address_client);
     client_socket = accept(server_socket,(struct sockaddr *)&address_client,&len);
     if(client_socket == -1){
         error("Error cannot connect to client \n");
     }
-    int i=0;
-    for(i=0;i<max_clients;i++){
+    
+    char x[256] ;
         
+    // int check_st = recv(client_socket,x,256,0);
+    int i=0;
+    int done = 0;
+    for(i=0;i<max_clients;i++){
+        if(client_socket == all_clients[i]){
+            done=1;
+        }
     }
+    // printf("%s\n",x);
+    if(!done){
+         for(i=0;i<max_clients;i++){
+        if(all_clients[i] == 0){
+            
+           all_clients[i] = client_socket;
+           break;
+        }
+    }
+    }
+
+    // for(i=0;i<max_clients;i++){
+    //     if(all_clients[i].name !=NULL){
+    //         printf("%s ,%d\n", all_clients[i].name,all_clients[i].client_socket);}
+        
+    // }
+    
+
     int status = recv(client_socket,server_message,256,0);
     if(status == -1){
         error("Error in recieving message");
@@ -76,8 +115,3 @@ char * remove_spaces(char buffer[256]){
     return str;
 }
 
-struct client{
-    int client_socket;
-    char *name;
-    struct sockaddr_un client_address;
-};
