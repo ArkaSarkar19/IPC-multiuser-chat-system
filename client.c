@@ -73,7 +73,8 @@ void listen(int client_socket){
         char buffer[256];
         if(recv(client_socket,buffer,256,0)==-1){
             error("Error in revieving");
-            printf("%s\n", buffer);
         }
+                    printf("%s\n", buffer);
+
     }
 }
