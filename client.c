@@ -9,7 +9,7 @@
 #define server_path  "server_socket"
 
 void error(char *message);
-void listen(int client_socket);
+void listen1(int client_socket);
 int main(){
     pthread_t thread;
     int client_socket;
@@ -36,7 +36,7 @@ int main(){
 
     // if(send(client_socket,client_name,strlen(client_name),0)==-1) error("Error server didn't respond");
     printf("Connected to Server \n");
-    pthread_create(&thread,NULL,listen,&client_socket);
+    pthread_create(&thread,NULL,listen1,&client_socket);
     while(1){
 
     printf("Enter the message :");
@@ -58,7 +58,7 @@ int main(){
     printf(" %s\n",s_response);
 
      }
-    //close(client_socket);
+    close(client_socket);
     return 0;
 }
 
@@ -68,13 +68,13 @@ void error(char *message){
     exit(0);
 }
 
-void listen(int client_socket){
+void listen1(int client_socket){
     for(;;){
         char buffer[256];
         if(recv(client_socket,buffer,256,0)==-1){
             error("Error in revieving");
         }
-                    printf("%s\n", buffer);
+     printf("%s\n", buffer);
 
     }
 }

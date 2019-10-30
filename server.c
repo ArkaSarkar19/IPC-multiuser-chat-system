@@ -5,30 +5,37 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <sys/un.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <pthread.h>
 #define path "server_socket"
+struct client all_clients[100];
+int max_clients = 0;
 
-
+pthread_t client_threads[100];
 char *remove_spaces(char buffer[256]);
 void error(char *message);
+char ** getdata(char buffer[256]);
+void server(int max_client);
+
 struct client{
-    int client_socket ;
-    char *name;
+    int source_client_socket ;
+    int dest_client_socket;
     struct sockaddr_un client_address;
 };
 
-int main(int argc, char *argv[]){
-
-    int max_clients = atoi(argv[1]);
-    int all_clients[max_clients] ;
-    for(int j=0;j<max_clients;j++){
-        all_clients[j] = 0;
-    }
+int main(){
+    //  max_clients = atoi(argv[1]);
+    // for(int j=0;j<max_clients;j++){
+    //     all_clients[j] = 0;
+    // }
     int server_socket,client_socket;
     
     server_socket = socket(AF_UNIX, SOCK_STREAM,0);
     if(server_socket == -1){
         error("Error in opening socket \n");
     }
+    printf("%d\n",server_socket);
     struct sockaddr_un address_server,address_client;
     address_server.sun_family = AF_UNIX;
     
@@ -38,63 +45,33 @@ int main(int argc, char *argv[]){
     if(server_bind == -1){
         error("Error establishing a server socket connection \n");
     }
-  
-   
-    while(1){
-         if(listen(server_socket,max_clients) == -1){
+  if(listen(server_socket,10) == -1){
         error("Error in listening via socket");
     }
-        client_socket = 0;
-    char server_message[256] = {};
-    for(int j=0;j<max_clients;j++){
-        printf("%d\n",all_clients[j]);
-    }
+    while(1){
+
+    // for(int j=0;j<max_clients;j++){
+    //     printf("%d\n",all_clients[j]);
+    // }
     int len = sizeof(address_client);
     client_socket = accept(server_socket,(struct sockaddr *)&address_client,&len);
+    printf("current client socket %d\n",client_socket);
     if(client_socket == -1){
         error("Error cannot connect to client \n");
     }
-    
-    char x[256] ;
-        
-    // int check_st = recv(client_socket,x,256,0);
-    int i=0;
-    int done = 0;
-    for(i=0;i<max_clients;i++){
-        if(client_socket == all_clients[i]){
-            done=1;
-        }
-    }
-    // printf("%s\n",x);
-    if(!done){
-         for(i=0;i<max_clients;i++){
-        if(all_clients[i] == 0){
-            
-           all_clients[i] = client_socket;
-           break;
-        }
-    }
-    }
+    all_clients[max_clients].source_client_socket = client_socket;
 
-    // for(i=0;i<max_clients;i++){
-    //     if(all_clients[i].name !=NULL){
-    //         printf("%s ,%d\n", all_clients[i].name,all_clients[i].client_socket);}
-        
+    
+    pthread_create(&client_threads[max_clients],NULL,server,max_clients);
+    //printf("The messeage recieved is : %s", server_message );
+    // char mes[256] = "Message recieved";
+    // if(send(client_socket,mes,strlen(mes),0 ) < 0){
+    //     error("Error in replying to client");
     // }
-    
+    //close(client_socket);
+    max_clients++;
+    }
 
-    int status = recv(client_socket,server_message,256,0);
-    if(status == -1){
-        error("Error in recieving message");
-    }
-    printf("The messeage recieved is : %s", server_message );
-    char mes[256] = "Message recieved";
-    if(send(client_socket,mes,status,0 ) < 0){
-        error("Error in replying to client");
-    }
-    close(client_socket);
-    }
-    return 0;
 }
 
 
@@ -115,3 +92,40 @@ char * remove_spaces(char buffer[256]){
     return str;
 }
 
+
+char ** getdata(char buffer[256]){
+    int i,j,k = 0;
+    int flag1 = 0;
+    int flag2 = 0;
+    char **data[2][256];
+    while(buffer[i]!='\n'){
+        if(flag1==0  ){
+            data[0][j] = buffer[i];
+            j++; 
+        }
+        else if(flag1==0 && buffer[i]=='|') flag1 = 1;
+        else if(flag1 == 1 && flag2==0){
+            data[1][k] = buffer[i];
+            k++;
+        }
+        else;
+        ++i;
+    }
+    return data;
+}
+void server(int max_client){
+
+    while(1){
+    char server_message[256] = {};
+
+     int status = recv(all_clients[max_client].source_client_socket,server_message,256,0);
+    if(status == -1){
+        error("Error in recieving message");
+    }
+    char **data[2][256] = getdata(server_message);
+    all_clients[max_clients].dest_client_socket = atoi(data[0]);
+    if(send(all_clients[max_client].dest_client_socket,data[1],strlen(data[1]),0)==-1){
+        error("Error send message back to client");
+    }
+    }
+}
