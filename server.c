@@ -8,27 +8,30 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <pthread.h>
+#include <signal.h>
 #define path "server_socket"
 int max_clients = 0;
+pthread_t thread[100];
+
 
 char *remove_spaces(char buffer[256]);
 void error(char *message);
 char ** getdata(char buffer[256]);
 void server(int max_client);
-
+void cleanup();
 struct client{
     int source_client_socket ;
     int dest_client_socket;
     struct sockaddr_un client_address;
 };
 
-  static  struct client all_clients[100];
+static  struct client all_clients[100];
 
 int main(){
 
     int server_socket,client_socket;
     key_t key = ftok("shmfile",65); 
-
+    char str[256];
     int shmid = shmget(key,1024,0666|IPC_CREAT); 
     char *data = (char*) shmat(shmid,(void*)0,0); 
     server_socket = socket(AF_UNIX, SOCK_STREAM,0);
@@ -59,18 +62,20 @@ int main(){
     if(client_socket == -1){
         error("Error cannot connect to client \n");
     }
-    strcpy(data, " |");
-    char add[100];
+    signal(SIGINT,cleanup);
+    strcat(str, " |");
+    char add[10];
     sprintf(add,"%d",client_socket);
-    strcpy(data, add);
+    strcat(str, add);
+    strcpy(data,str);
 
     all_clients[max_clients].source_client_socket = client_socket;
     printf("%d\n",all_clients[max_clients].source_client_socket);
-    pthread_t thread;
-    pthread_create(&thread,NULL,server,(void *)max_clients);
+    pthread_create(&thread[max_clients],NULL,server,(void *)max_clients);
     max_clients++;
     printf("max clients %d\n", max_clients);
     }
+    cleanup(1);
     
 
 }
@@ -125,30 +130,6 @@ void server(int max_client){
         error("Error in recieving message");
     }
     //char **data[2][256] = getdata(server_message);
-    //  int i,j,k = 0;
-    // int flag1 = 0;
-    // int flag2 = 0;
-    // char data1[256];
-    // char data2[256];
-    // while(buffer[i]!='\n'){
-    //             //printf("%s",buffer[i]);
-    //     //printf("%d",strcmp(buffer[i],"|"));
-    //     if(flag1==0  ){
-    //         data1[j]= buffer[i];
-    //         j++; 
-    //     }
-
-    //     else if(strcmp(buffer[i],"|")==0){ 
-    //         flag1 = 1;
-    //         printf("efheifwofiwfhiwfowhf");
-    //         }
-    //     else if(flag1 == 1 && flag2==0){
-    //         data2[k] = buffer[i];
-    //         k++;
-    //     }
-    //     else;
-    //     ++i;
-    // }
 
  char data2[256] = {};
 
@@ -163,8 +144,8 @@ void server(int max_client){
    //  printf("%d\n",atoi(data1));
    printf("%d\n",strcmp(data1,"EVERYONE"));
      if(strcmp(data1,"EVERYONE")==10){
-         printf("%d\n",max_client);
-         for(int i=0;i<max_client+1;i++){
+         printf("%d\n",max_clients);
+         for(int i=0;i<max_clients;i++){
              printf("ddddddddddddddd%d\n",i);
              printf("%d\n",all_clients[i].source_client_socket);
             if(send(all_clients[i].source_client_socket,data2,strlen(data2),0)==-1){
@@ -181,4 +162,12 @@ void server(int max_client){
     }
      }
     }
+}
+void cleanup(int sig){
+   // fflush(stdout);
+    printf("EXITING \n");
+    for(int i=0;i<max_clients;i++){
+        pthread_join(thread[i],NULL);
+    }
+    exit(0);
 }

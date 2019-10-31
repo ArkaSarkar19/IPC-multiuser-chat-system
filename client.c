@@ -7,12 +7,15 @@
 #include <sys/un.h>
 #include <pthread.h>
 #include <sys/shm.h>
+#include <signal.h>
 #define server_path  "server_socket"
 
 void error(char *message);
 void listen1(int client_socket);
-int main(){
+void cleanup();
     pthread_t thread;
+
+int main(){
     int client_socket;
     // char client_name[256] = {};
     // printf("Enter your name : ");
@@ -54,7 +57,9 @@ int main(){
     fgets(buffer1,256,stdin);
     // printf("%s\n",buffer);
     // printf("%d\n",strcmp(buffer, "exit") );
+    signal(SIGINT,cleanup);
     if(strcmp(buffer1, "exit")==10){
+        cleanup(1);
          break;
     }
     int s_client1 = send(client_socket,buffer1,strlen(buffer1),0);
@@ -78,8 +83,7 @@ int main(){
 
     }
 
-
-      }
+    }
     close(client_socket);
     return 0;
 }
@@ -101,4 +105,12 @@ void listen1(int client_socket){
      printf("NEW MESSAGE %s\n", buffer);
 
     }
+}
+void cleanup(int sig){
+        fflush(stdout);
+
+    printf("BYE !!!! \n");
+
+    pthread_join(thread,NULL);
+    exit(0);
 }
