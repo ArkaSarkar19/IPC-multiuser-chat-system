@@ -9,7 +9,6 @@
 #include <sys/shm.h>
 #include <pthread.h>
 #define path "server_socket"
-struct client all_clients[100];
 int max_clients = 0;
 
 pthread_t client_threads[100];
@@ -23,6 +22,8 @@ struct client{
     int dest_client_socket;
     struct sockaddr_un client_address;
 };
+struct client all_clients[100];
+
 
 int main(){
     //  max_clients = atoi(argv[1]);
@@ -62,8 +63,8 @@ int main(){
     all_clients[max_clients].source_client_socket = client_socket;
 
     
-    pthread_create(&client_threads[max_clients],NULL,server,max_clients);
-    //printf("The messeage recieved is : %s", server_message );
+    pthread_create(&client_threads[max_clients],NULL,server,(void *)max_clients);
+    //printf("The messeage r(void *ecieved is : %s", server_message );
     // char mes[256] = "Message recieved";
     // if(send(client_socket,mes,strlen(mes),0 ) < 0){
     //     error("Error in replying to client");
@@ -71,6 +72,7 @@ int main(){
     //close(client_socket);
     max_clients++;
     }
+    
 
 }
 
@@ -116,15 +118,53 @@ char ** getdata(char buffer[256]){
 void server(int max_client){
 
     while(1){
-    char server_message[256] = {};
+    char data1[256] = {};
 
-     int status = recv(all_clients[max_client].source_client_socket,server_message,256,0);
-    if(status == -1){
+     int status1 = recv(all_clients[max_client].source_client_socket,data1,256,0);
+    if(status1 == -1){
         error("Error in recieving message");
     }
-    char **data[2][256] = getdata(server_message);
-    all_clients[max_clients].dest_client_socket = atoi(data[0]);
-    if(send(all_clients[max_client].dest_client_socket,data[1],strlen(data[1]),0)==-1){
+    //char **data[2][256] = getdata(server_message);
+    //  int i,j,k = 0;
+    // int flag1 = 0;
+    // int flag2 = 0;
+    // char data1[256];
+    // char data2[256];
+    // while(buffer[i]!='\n'){
+    //             //printf("%s",buffer[i]);
+    //     //printf("%d",strcmp(buffer[i],"|"));
+    //     if(flag1==0  ){
+    //         data1[j]= buffer[i];
+    //         j++; 
+    //     }
+
+    //     else if(strcmp(buffer[i],"|")==0){ 
+    //         flag1 = 1;
+    //         printf("efheifwofiwfhiwfowhf");
+    //         }
+    //     else if(flag1 == 1 && flag2==0){
+    //         data2[k] = buffer[i];
+    //         k++;
+    //     }
+    //     else;
+    //     ++i;
+    // }
+
+ char data2[256] = {};
+
+     int status2 = recv(all_clients[max_client].source_client_socket,data2,256,0);
+    if(status2 == -1){
+        error("Error in recieving message");
+    }
+    printf("%s\n",data1);
+    printf("%s\n",data2);
+    // int d;
+    // sprintf(d,"%d",data1);
+     printf("%d\n",atoi(data1));
+    all_clients[max_clients].dest_client_socket = (int)(data1);
+   // printf("Destinatinf socket %d\n",all_clients[max_client].dest_client_socket);
+    data2[status2] = '\0';
+    if(send(atoi(data1),data2,strlen(data2),0)==-1){
         error("Error send message back to client");
     }
     }

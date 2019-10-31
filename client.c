@@ -36,29 +36,44 @@ int main(){
 
     // if(send(client_socket,client_name,strlen(client_name),0)==-1) error("Error server didn't respond");
     printf("Connected to Server \n");
-    pthread_create(&thread,NULL,listen1,&client_socket);
+    pthread_create(&thread,NULL,listen1,(void *)client_socket);
     while(1){
 
-    printf("Enter the message :");
-    char buffer[512] = {};
+    printf("Enter the client to send:");
+    char buffer1[256] = {};
 
-    fgets(buffer,255,stdin);
+    fgets(buffer1,256,stdin);
     // printf("%s\n",buffer);
     // printf("%d\n",strcmp(buffer, "exit") );
-    if(strcmp(buffer, "exit")==10){
+    if(strcmp(buffer1, "exit")==10){
          break;
     }
-    int s_client = send(client_socket,buffer,strlen(buffer),0);
-    if(s_client==-1){
+    int s_client1 = send(client_socket,buffer1,strlen(buffer1),0);
+    if(s_client1==-1){
         error("Error writing to client socket");
 
     }
-    char s_response[256];
-   if(recv(client_socket,s_response,255,0) < 0) error("Error recieving repsonse from server");
-    printf(" %s\n",s_response);
+    printf("Enter the message:");
 
-     }
-    close(client_socket);
+    char buffer2[256] = {};
+
+    fgets(buffer2,256,stdin);
+    // printf("%s\n",buffer);
+    // printf("%d\n",strcmp(buffer, "exit") );
+    if(strcmp(buffer2, "exit")==10){
+         break;
+    }
+    int s_client2 = send(client_socket,buffer2,strlen(buffer2),0);
+    if(s_client2==-1){
+        error("Error writing to client socket");
+
+    }
+//     char s_response[256];
+//    if(recv(client_socket,s_response,255,0) < 0) error("Error recieving repsonse from server");
+//     printf(" %s\n",s_response);
+
+      }
+    //close(client_socket);
     return 0;
 }
 
@@ -69,12 +84,14 @@ void error(char *message){
 }
 
 void listen1(int client_socket){
-    for(;;){
-        char buffer[256];
-        if(recv(client_socket,buffer,256,0)==-1){
+    while(1){
+        char buffer[256] = {};
+        int i;
+        if(i= recv(client_socket,buffer,256,0)==-1){
             error("Error in revieving");
         }
-     printf("%s\n", buffer);
+    //    buffer[i] = '\0';
+     printf("NEW MESSAGE %s\n", buffer);
 
     }
 }
