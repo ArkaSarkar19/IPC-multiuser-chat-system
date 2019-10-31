@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/un.h>
 #include <pthread.h>
+#include <sys/shm.h>
 #define server_path  "server_socket"
 
 void error(char *message);
@@ -16,6 +17,10 @@ int main(){
     // char client_name[256] = {};
     // printf("Enter your name : ");
     // fgets(client_name,256,stdin);  
+    key_t key = ftok("shmfile",65); 
+  
+    int shmid = shmget(key,1024,0666|IPC_CREAT); 
+  
 
     client_socket =  socket(AF_UNIX, SOCK_STREAM,0);
     printf("%d\n",client_socket);
@@ -38,6 +43,10 @@ int main(){
     printf("Connected to Server \n");
     pthread_create(&thread,NULL,listen1,(void *)client_socket);
     while(1){
+    char c[100] = {};
+    fgets(c,100,stdin);
+    char *str = (char*) shmat(shmid,(void*)0,0);
+    printf("Avalable clients : %s\n", str);
 
     printf("Enter the client to send:");
     char buffer1[256] = {};
@@ -68,12 +77,10 @@ int main(){
         error("Error writing to client socket");
 
     }
-//     char s_response[256];
-//    if(recv(client_socket,s_response,255,0) < 0) error("Error recieving repsonse from server");
-//     printf(" %s\n",s_response);
+
 
       }
-    //close(client_socket);
+    close(client_socket);
     return 0;
 }
 
