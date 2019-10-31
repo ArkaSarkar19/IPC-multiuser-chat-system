@@ -154,12 +154,32 @@ void server(int max_client){
          }
      }
      else{
-    all_clients[max_client].dest_client_socket = (int)(data1);
+         int done = 0;
+         for(int i=0;i<max_clients;i++){
+           if(all_clients[i].source_client_socket == atoi(data1)){
+               done = 1;
+           }
+         }
+         if(done){
+              all_clients[max_client].dest_client_socket = (int)(data1);
    // printf("Destinatinf socket %d\n",all_clients[max_client].dest_client_socket);
-    data2[status2] = '\0';
-    if(send(atoi(data1),data2,strlen(data2),0)==-1){
+   char add[256];
+   strcat(add," From");
+   sprintf(add," %d",all_clients[max_client].source_client_socket);
+   strcat(add,"  says  ");
+   strcat(add,data2);
+    //data2[status2] = '\0';
+    if(send(atoi(data1),add,strlen(add),0)==-1){
         error("Error send message446 back to client\n");
     }
+         }
+         else{
+             char data3[256] = "Not a valid client";
+    if(send(all_clients[max_client].source_client_socket,data3,strlen(data3),0)==-1){
+        error("Error send message447 back to client\n");
+    }
+         }
+   
      }
     }
 }

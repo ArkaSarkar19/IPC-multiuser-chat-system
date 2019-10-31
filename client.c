@@ -102,7 +102,7 @@ void listen1(int client_socket){
             error("Error in revieving");
         }
     //    buffer[i] = '\0';
-     printf("NEW MESSAGE %s\n", buffer);
+     printf("NEW MESSAGE : %s\n", buffer);
 
     }
 }
